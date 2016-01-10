@@ -199,10 +199,17 @@ static ERL_NIF_TERM enif_sphincs_verify(ErlNifEnv *env, int argc, ERL_NIF_TERM c
     return enif_make_binary(env, &output);
 }
 
+#ifdef ERL_NIF_DIRTY_SCHEDULER_SUPPORT
+#  define CPU_BOUND_NIF_FUNCTION(Name, Arity, Function) { Name, Arity, Function, ERL_NIF_DIRTY_JOB_CPU_BOUND }
+#else
+#  define CPU_BOUND_NIF_FUNCTION(Name, Arity, Function) { Name, Arity, Function }
+#  warning "ERL_NIF_DIRTY_SCHEDULER_SUPPORT missing"
+#endif
+
 static ErlNifFunc nif_functions[] = {
-    { "keypair", 0, enif_sphincs_keypair, ERL_NIF_DIRTY_JOB_CPU_BOUND },
-    { "sign", 2, enif_sphincs_sign, ERL_NIF_DIRTY_JOB_CPU_BOUND },
-    { "verify", 2, enif_sphincs_verify, ERL_NIF_DIRTY_JOB_CPU_BOUND },
+    CPU_BOUND_NIF_FUNCTION("keypair", 0, enif_sphincs_keypair),
+    CPU_BOUND_NIF_FUNCTION("sign", 2, enif_sphincs_sign),
+    CPU_BOUND_NIF_FUNCTION("verify", 2, enif_sphincs_verify),
 };
 
 static int on_load(ErlNifEnv *env, void **priv_data, ERL_NIF_TERM load_info)
