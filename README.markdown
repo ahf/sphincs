@@ -1,5 +1,5 @@
-Spincs NIF for Erlang
-=====================
+SPHINCS-256  NIF for Erlang
+===========================
 
 SPHINCS-256 is a high-security post-quantum stateless hash-based signature
 scheme. This repository contains the SPHINCS-256 implementation found in the
