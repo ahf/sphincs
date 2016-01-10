@@ -11,12 +11,7 @@
 
 #define STACK_SIZE (20 * 1024 * 1024)
 
-static ERL_NIF_TERM make_error_tuple(ErlNifEnv *env, char *error)
-{
-    return enif_make_tuple2(env, enif_make_atom(env, "error"), enif_make_atom(env, error));
-}
-
-struct data {
+struct thread_data {
     unsigned char *key;
 
     unsigned char *input;
@@ -27,6 +22,25 @@ struct data {
 
     unsigned int status;
 };
+
+static void *crypto_sign_sphincs_thread(void *x)
+{
+    struct thread_data *data = x;
+    data->status = crypto_sign_sphincs(data->output, &data->output_size, data->input, data->input_size, data->key);
+    return NULL;
+}
+
+static void *crypto_sign_sphincs_open_thread(void *x)
+{
+    struct thread_data *data = x;
+    data->status = crypto_sign_sphincs_open(data->output, &data->output_size, data->input, data->input_size, data->key);
+    return NULL;
+}
+
+static ERL_NIF_TERM make_error_tuple(ErlNifEnv *env, char *error)
+{
+    return enif_make_tuple2(env, enif_make_atom(env, "error"), enif_make_atom(env, error));
+}
 
 static ERL_NIF_TERM enif_sphincs_keypair(ErlNifEnv *env, int argc, ERL_NIF_TERM const argv[])
 {
@@ -52,13 +66,6 @@ static ERL_NIF_TERM enif_sphincs_keypair(ErlNifEnv *env, int argc, ERL_NIF_TERM 
     }
 
     return enif_make_tuple2(env, enif_make_binary(env, &public), enif_make_binary(env, &secret));
-}
-
-static void *sign_thread(void *x)
-{
-    struct data *data = x;
-    data->status = crypto_sign_sphincs(data->output, &data->output_size, data->input, data->input_size, data->key);
-    return NULL;
 }
 
 static ERL_NIF_TERM enif_sphincs_sign(ErlNifEnv *env, int argc, ERL_NIF_TERM const argv[])
@@ -88,7 +95,7 @@ static ERL_NIF_TERM enif_sphincs_sign(ErlNifEnv *env, int argc, ERL_NIF_TERM con
 
     unsigned char signed_message_buf[CRYPTO_BYTES + message.size];
 
-    struct data thread_data;
+    struct thread_data thread_data;
     thread_data.key = secret.data;
 
     thread_data.input = message.data;
@@ -105,7 +112,7 @@ static ERL_NIF_TERM enif_sphincs_sign(ErlNifEnv *env, int argc, ERL_NIF_TERM con
         return make_error_tuple(env, "pthread_attr_setstacksize_error");
     }
 
-    if (pthread_create(&signing_thread, &attributes, sign_thread, &thread_data) != 0) {
+    if (pthread_create(&signing_thread, &attributes, crypto_sign_sphincs_thread, &thread_data) != 0) {
         return make_error_tuple(env, "signing_thread_create_failed");
     }
 
@@ -124,13 +131,6 @@ static ERL_NIF_TERM enif_sphincs_sign(ErlNifEnv *env, int argc, ERL_NIF_TERM con
     memmove(signed_message.data, signed_message_buf, thread_data.output_size);
 
     return enif_make_binary(env, &signed_message);
-}
-
-static void *verify_thread(void *x)
-{
-    struct data *data = x;
-    data->status = crypto_sign_sphincs_open(data->output, &data->output_size, data->input, data->input_size, data->key);
-    return NULL;
 }
 
 static ERL_NIF_TERM enif_sphincs_verify(ErlNifEnv *env, int argc, ERL_NIF_TERM const argv[])
@@ -161,7 +161,7 @@ static ERL_NIF_TERM enif_sphincs_verify(ErlNifEnv *env, int argc, ERL_NIF_TERM c
 
     unsigned char output_buf[input.size + CRYPTO_BYTES];
 
-    struct data thread_data;
+    struct thread_data thread_data;
     thread_data.key = public.data;
 
     thread_data.input = input.data;
@@ -178,7 +178,7 @@ static ERL_NIF_TERM enif_sphincs_verify(ErlNifEnv *env, int argc, ERL_NIF_TERM c
         return make_error_tuple(env, "pthread_attr_setstacksize_error");
     }
 
-    if (pthread_create(&verification_thread, &attributes, verify_thread, &thread_data) != 0) {
+    if (pthread_create(&verification_thread, &attributes, crypto_sign_sphincs_open_thread, &thread_data) != 0) {
         return make_error_tuple(env, "verification_thread_create_failed");
     }
 
