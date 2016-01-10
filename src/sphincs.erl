@@ -38,7 +38,7 @@ key() ->
     #{ secret := Secret, public := Public } = keypair(),
     {Public, Secret}.
 
-prop_shared() ->
+prop_create_sign_verify_valid() ->
     ?FORALL({{Public, Secret}, Message}, {key(), binary()},
         begin
             SignedMessage = sign(Message, Secret),
