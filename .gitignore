@@ -1,0 +1,12 @@
+*.html
+*.o
+*.plt
+*.so
+.erlang.mk/
+c_src/crypto_core/include/crypto_hash_blake256.h
+c_src/crypto_core/include/crypto_hash_blake512.h
+c_src/crypto_core/include/crypto_stream_chacha12.h
+c_src/env.mk
+deps/
+ebin/
+sphincs.d
