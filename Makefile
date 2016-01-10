@@ -12,7 +12,7 @@ CRYPTO_CORE_INCLUDE_DIR = $(C_SRC_DIR)/crypto_core/include
 CRYPTO_CORE_TEMPLATE_DIR = $(C_SRC_DIR)/crypto_core/templates
 
 CFLAGS  = -Wall -O2 -I$(CRYPTO_CORE_INCLUDE_DIR)
-LDFLAGS = -arch x86_64 -flat_namespace -undefined suppress -lsodium -g -ggdb3 
+LDLIBS  = -lsodium
 
 CRYPTO_CORE_SOURCES = $(sort $(foreach pat,*.c,$(call core_find,$(C_SRC_DIR)/crypto_core/src/,$(pat))))
 BLAKE256_SOURCES    = $(sort $(foreach pat,*.c,$(call core_find,$(C_SRC_DIR)/crypto_hash/blake256/$(BLAKE256)/,$(pat))))
