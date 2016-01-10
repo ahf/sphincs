@@ -3,6 +3,8 @@
 #include <pthread.h>
 #include <limits.h>
 
+#include <sodium.h>
+
 #include "erl_nif.h"
 
 #include "../crypto_sign/sphincs256/ref/api.h"
@@ -208,6 +210,8 @@ static int on_load(ErlNifEnv *env, void **priv_data, ERL_NIF_TERM load_info)
     (void)env;
     (void)priv_data;
     (void)load_info;
+
+    sodium_init();
 
     return 0;
 }
