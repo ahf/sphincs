@@ -4,10 +4,11 @@ sudo: required
 otp_release:
     - 18.0
     - 18.1
+    - 18.2
 
 install:
     - sudo add-apt-repository "deb http://us.archive.ubuntu.com/ubuntu/ wily universe multiverse"
     - sudo apt-get update -qq
-    - sudo apt-get install -y libsodium13
+    - sudo apt-get install -y libsodium13 libsodium-dev
 
-script: "make check"
+script: "make check V=1"
