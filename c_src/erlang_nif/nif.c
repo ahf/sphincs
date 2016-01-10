@@ -1,15 +1,18 @@
 #include <string.h>
 
-#include <pthread.h>
-#include <limits.h>
-
 #include <sodium.h>
 
 #include "erl_nif.h"
 
 #include "../crypto_sign/sphincs256/ref/api.h"
 
-#define STACK_SIZE (20 * 1024 * 1024)
+#define THREADED_BUILD
+
+#ifdef THREADED_BUILD
+#  include <pthread.h>
+#  include <limits.h>
+#  define THREAD_STACK_SIZE (20 * 1024 * 1024)
+#endif
 
 struct thread_data {
     unsigned char *key;
@@ -104,11 +107,12 @@ static ERL_NIF_TERM enif_sphincs_sign(ErlNifEnv *env, int argc, ERL_NIF_TERM con
     thread_data.output = signed_message_buf;
     thread_data.output_size = 0;
 
+#ifdef THREADED_BUILD
     pthread_t signing_thread;
     pthread_attr_t attributes;
 
     pthread_attr_init(&attributes);
-    if (pthread_attr_setstacksize(&attributes, STACK_SIZE) != 0) {
+    if (pthread_attr_setstacksize(&attributes, THREAD_STACK_SIZE) != 0) {
         return make_error_tuple(env, "pthread_attr_setstacksize_error");
     }
 
@@ -119,6 +123,9 @@ static ERL_NIF_TERM enif_sphincs_sign(ErlNifEnv *env, int argc, ERL_NIF_TERM con
     if (pthread_join(signing_thread, NULL) != 0) {
         return make_error_tuple(env, "signing_thread_join_failed");
     }
+#else
+    crypto_sign_sphincs_thread(&thread_data);
+#endif
 
     if (thread_data.status != 0) {
         return make_error_tuple(env, "crypto_sign_failed");
@@ -170,11 +177,12 @@ static ERL_NIF_TERM enif_sphincs_verify(ErlNifEnv *env, int argc, ERL_NIF_TERM c
     thread_data.output = output_buf;
     thread_data.output_size = 0;
 
+#ifdef THREADED_BUILD
     pthread_t verification_thread;
     pthread_attr_t attributes;
 
     pthread_attr_init(&attributes);
-    if (pthread_attr_setstacksize(&attributes, STACK_SIZE) != 0) {
+    if (pthread_attr_setstacksize(&attributes, THREAD_STACK_SIZE) != 0) {
         return make_error_tuple(env, "pthread_attr_setstacksize_error");
     }
 
@@ -185,6 +193,9 @@ static ERL_NIF_TERM enif_sphincs_verify(ErlNifEnv *env, int argc, ERL_NIF_TERM c
     if (pthread_join(verification_thread, NULL) != 0) {
         return make_error_tuple(env, "verification_thread_join_failed");
     }
+#else
+    crypto_sign_sphincs_open_thread(&thread_data);
+#endif
 
     if (thread_data.status != 0) {
         return make_error_tuple(env, "failed_verification");
