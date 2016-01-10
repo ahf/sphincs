@@ -1,6 +1,8 @@
 SPHINCS-256  NIF for Erlang
 ===========================
 
+[![Build Status](https://travis-ci.org/ahf/sphincs.svg?branch=develop)](https://travis-ci.org/ahf/sphincs)
+
 SPHINCS-256 is a high-security post-quantum stateless hash-based signature
 scheme. This repository contains the SPHINCS-256 implementation found in the
 SUPERCOP performance suite together with an Erlang NIF's for the SPHINCS API.

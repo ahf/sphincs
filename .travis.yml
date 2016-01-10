@@ -1,0 +1,7 @@
+language: erlang
+
+otp_release:
+    - 18.0
+    - 18.1
+
+script: "make check"
