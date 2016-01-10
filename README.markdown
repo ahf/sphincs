@@ -14,6 +14,27 @@ For more information about SPHINCS see:
 - http://sphincs.cr.yp.to
 - http://bench.cr.yp.to/supercop.html
 
+## Usage
+
+1. Create a keypair.
+
+        1> #{ secret := Secret, public := Public } = sphincs:keypair().
+        #{public => <<188,75,148,147,203,240,152,149,40,103,197,233,4,199,
+            245,227,31,251,245,128,2,168,21,194,235,35,151,252,...>>,
+          secret => <<190,137,81,29,80,110,124,82,179,203,5,180,19,120,3,111,
+            79,205,116,240,52,112,78,227,78,142,140,...>>}
+
+2. Sign a document.
+
+        2> SignedDocument = sphincs:sign(<<"Hello world!">>, Secret).
+        <<169,24,140,16,104,204,246,11,124,204,196,91,67,108,125,
+          104,108,77,153,127,231,174,138,213,44,62,250,130,253,...>>
+
+3. Verify a signed document.
+
+        3> sphincs:verify(SignedDocument, Public).
+        {ok,<<"Hello world!">>}
+
 ## Current Issues
 
 - SPHINCS-256 uses "large", stack allocated, buffers for working with the 41 KB
