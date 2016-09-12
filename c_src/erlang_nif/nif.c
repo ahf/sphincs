@@ -229,9 +229,7 @@ static int on_load(ErlNifEnv *env, void **priv_data, ERL_NIF_TERM load_info)
     (void)priv_data;
     (void)load_info;
 
-    sodium_init();
-
-    return 0;
+    return sodium_init() >= 0 ? 0 : 1;
 }
 
 static int on_upgrade(ErlNifEnv *env, void **priv_data, void **old_priv_data, ERL_NIF_TERM load_info)
