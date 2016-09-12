@@ -1,5 +1,8 @@
 language: erlang
 
+# Hack to make Travis not try to run rebar get-deps for a rebar3 project.
+install: 'true'
+
 otp_release:
     - 18.3
     - 19.0
