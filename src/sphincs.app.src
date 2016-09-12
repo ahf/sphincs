@@ -1,0 +1,13 @@
+{application, sphincs, [
+    {description, "SPHINCS-256: practical stateless hash-based signatures."},
+    {vsn, "1.0.0"},
+    {modules, []},
+    {registered, []},
+    {applications, [
+        crypto,
+        kernel,
+        stdlib
+    ]}
+]}.
+
+%% vim: set ft=erlang :
