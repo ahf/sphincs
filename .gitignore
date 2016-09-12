@@ -2,8 +2,6 @@
 *.o
 *.plt
 *.so
-.erlang.mk/
-c_src/env.mk
+_build/
 deps/
 ebin/
-sphincs.d
