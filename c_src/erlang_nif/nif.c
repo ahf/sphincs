@@ -6,40 +6,6 @@
 
 #include "../crypto_sign/sphincs256/ref/api.h"
 
-#define THREADED_BUILD
-
-#ifdef THREADED_BUILD
-#  include <pthread.h>
-#  include <limits.h>
-#  define THREAD_STACK_SIZE (20 * 1024 * 1024)
-#endif
-
-struct thread_data {
-    unsigned char *key;
-
-    unsigned char *input;
-    unsigned long long input_size;
-
-    unsigned char *output;
-    unsigned long long output_size;
-
-    unsigned int status;
-};
-
-static void *crypto_sign_sphincs_thread(void *x)
-{
-    struct thread_data *data = x;
-    data->status = crypto_sign_sphincs(data->output, &data->output_size, data->input, data->input_size, data->key);
-    return NULL;
-}
-
-static void *crypto_sign_sphincs_open_thread(void *x)
-{
-    struct thread_data *data = x;
-    data->status = crypto_sign_sphincs_open(data->output, &data->output_size, data->input, data->input_size, data->key);
-    return NULL;
-}
-
 static ERL_NIF_TERM make_error_tuple(ErlNifEnv *env, char *error)
 {
     return enif_make_tuple2(env, enif_make_atom(env, "error"), enif_make_atom(env, error));
@@ -93,49 +59,18 @@ static ERL_NIF_TERM enif_sphincs_sign(ErlNifEnv *env, int argc, ERL_NIF_TERM con
         return make_error_tuple(env, "invalid_secret_key");
     }
 
-    unsigned char message_buf[message.size];
-    memmove(message_buf, message.data, message.size);
+    unsigned char output[CRYPTO_BYTES + message.size];
+    unsigned long long output_size = 0;
 
-    unsigned char signed_message_buf[CRYPTO_BYTES + message.size];
-
-    struct thread_data thread_data;
-    thread_data.key = secret.data;
-
-    thread_data.input = message.data;
-    thread_data.input_size = message.size;
-
-    thread_data.output = signed_message_buf;
-    thread_data.output_size = 0;
-
-#ifdef THREADED_BUILD
-    pthread_t signing_thread;
-    pthread_attr_t attributes;
-
-    pthread_attr_init(&attributes);
-    if (pthread_attr_setstacksize(&attributes, THREAD_STACK_SIZE) != 0) {
-        return make_error_tuple(env, "pthread_attr_setstacksize_error");
-    }
-
-    if (pthread_create(&signing_thread, &attributes, crypto_sign_sphincs_thread, &thread_data) != 0) {
-        return make_error_tuple(env, "signing_thread_create_failed");
-    }
-
-    if (pthread_join(signing_thread, NULL) != 0) {
-        return make_error_tuple(env, "signing_thread_join_failed");
-    }
-#else
-    crypto_sign_sphincs_thread(&thread_data);
-#endif
-
-    if (thread_data.status != 0) {
+    if (crypto_sign_sphincs(output, &output_size, message.data, message.size, secret.data) != 0) {
         return make_error_tuple(env, "crypto_sign_failed");
     }
 
-    if (! enif_alloc_binary(thread_data.output_size, &signed_message)) {
+    if (! enif_alloc_binary(output_size, &signed_message)) {
         return make_error_tuple(env, "alloc_signed_message_failed");
     }
 
-    memmove(signed_message.data, signed_message_buf, thread_data.output_size);
+    memmove(signed_message.data, output, output_size);
 
     return enif_make_binary(env, &signed_message);
 }
@@ -148,7 +83,7 @@ static ERL_NIF_TERM enif_sphincs_verify(ErlNifEnv *env, int argc, ERL_NIF_TERM c
 
     ErlNifBinary input;
     ErlNifBinary public;
-    ErlNifBinary output;
+    ErlNifBinary message;
 
     if (! enif_inspect_iolist_as_binary(env, argv[0], &input)) {
         return enif_make_badarg(env);
@@ -166,48 +101,20 @@ static ERL_NIF_TERM enif_sphincs_verify(ErlNifEnv *env, int argc, ERL_NIF_TERM c
         return make_error_tuple(env, "invalid_signature");
     }
 
-    unsigned char output_buf[input.size + CRYPTO_BYTES];
+    unsigned char output[input.size + CRYPTO_BYTES];
+    unsigned long long output_size = 0;
 
-    struct thread_data thread_data;
-    thread_data.key = public.data;
-
-    thread_data.input = input.data;
-    thread_data.input_size = input.size;
-
-    thread_data.output = output_buf;
-    thread_data.output_size = 0;
-
-#ifdef THREADED_BUILD
-    pthread_t verification_thread;
-    pthread_attr_t attributes;
-
-    pthread_attr_init(&attributes);
-    if (pthread_attr_setstacksize(&attributes, THREAD_STACK_SIZE) != 0) {
-        return make_error_tuple(env, "pthread_attr_setstacksize_error");
-    }
-
-    if (pthread_create(&verification_thread, &attributes, crypto_sign_sphincs_open_thread, &thread_data) != 0) {
-        return make_error_tuple(env, "verification_thread_create_failed");
-    }
-
-    if (pthread_join(verification_thread, NULL) != 0) {
-        return make_error_tuple(env, "verification_thread_join_failed");
-    }
-#else
-    crypto_sign_sphincs_open_thread(&thread_data);
-#endif
-
-    if (thread_data.status != 0) {
+    if (crypto_sign_sphincs_open(output, &output_size, input.data, input.size, public.data) != 0) {
         return make_error_tuple(env, "failed_verification");
     }
 
-    if (! enif_alloc_binary(thread_data.output_size, &output)) {
-        return make_error_tuple(env, "alloc_output_failed");
+    if (! enif_alloc_binary(output_size, &message)) {
+        return make_error_tuple(env, "alloc_message_failed");
     }
 
-    memmove(output.data, thread_data.output, thread_data.output_size);
+    memmove(message.data, output, output_size);
 
-    return enif_make_binary(env, &output);
+    return enif_make_binary(env, &message);
 }
 
 #ifdef ERL_NIF_DIRTY_SCHEDULER_SUPPORT

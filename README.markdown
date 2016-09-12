@@ -37,17 +37,6 @@ For more information about SPHINCS see:
 
 ## Current Issues
 
-- SPHINCS-256 uses "large", stack allocated, buffers for working with the 41 KB
-  signatures, which causes troubles for Erlang's BEAM VM.
-
-  On my Mac, it seems that the Erlang VM uses a worker thread to start the dirty
-  scheduler on, which then executes the NIF itself. This causes troubles because
-  the stack size for a thread is smaller than the stack size of an ordinary
-  program. We have worked around this with a very dirty hack where we create a
-  pthread, with a larger stack than the one the Erlang VM uses for the dirty
-  scheduler, which is immediately joined after creation. We should really find a
-  better solution to this.
-
 - It's currently only the `ref` implementation of BLAKE-256, BLAKE-512, ChaCha12
   and SPHINCS-256 that have been tested. It would be nice to have vectorized
   versions for higher performance.

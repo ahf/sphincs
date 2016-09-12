@@ -5,6 +5,10 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+#define TREE_SIZE ((2*HORST_T-1)*HASH_BYTES)
+#define SK_SIZE (HORST_T*HORST_SKBYTES)
 
 static void expand_seed(unsigned char outseeds[HORST_T*HORST_SKBYTES], const unsigned char inseed[SEED_BYTES])
 {
@@ -17,12 +21,12 @@ int horst_sign(unsigned char *sig, unsigned char pk[HASH_BYTES], unsigned long l
                const unsigned char masks[2*HORST_LOGT*HASH_BYTES], 
                const unsigned char m_hash[MSGHASH_BYTES])
 {
-  unsigned char sk[HORST_T*HORST_SKBYTES];
+  unsigned char *sk = malloc(SK_SIZE);
   unsigned int idx;
   int i,j,k;
   int sigpos = 0;
 
-  unsigned char tree[(2*HORST_T-1)*HASH_BYTES]; /* replace by something more memory-efficient? */
+  unsigned char *tree = malloc(TREE_SIZE);
 
   expand_seed(sk, seed);
 
@@ -74,6 +78,12 @@ int horst_sign(unsigned char *sig, unsigned char pk[HASH_BYTES], unsigned long l
     pk[i] = tree[i];
   
   *sigbytes = HORST_SIGBYTES;
+
+  memset(tree, 0, TREE_SIZE);
+  free(tree);
+
+  memset(sk, 0, SK_SIZE);
+  free(sk);
 
   return 0;
 }
