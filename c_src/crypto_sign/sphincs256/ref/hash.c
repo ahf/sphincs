@@ -5,18 +5,15 @@
 #include "crypto_hash_blake512.h"
 
 #include <stddef.h>
-#include <openssl/sha.h>
 
 int varlen_hash(unsigned char *out,const unsigned char *in,unsigned long long inlen)
 {
-  //SHA256(in,inlen,out);
   crypto_hash_blake256(out,in,inlen);
   return 0;
 }
 
 int msg_hash(unsigned char *out,const unsigned char *in,unsigned long long inlen)
 {
-  //SHA512(in,inlen,out);
   crypto_hash_blake512(out,in,inlen);
   return 0;
 }
