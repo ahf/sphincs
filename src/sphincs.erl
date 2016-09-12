@@ -16,8 +16,13 @@
 
 -spec keypair() -> keypair().
 keypair() ->
-    {Public, Secret} = sphincs_nif:keypair(crypto:strong_rand_bytes(1088)),
-    #{ public => Public, secret => Secret }.
+    case sphincs_nif:keypair(crypto:strong_rand_bytes(1088)) of
+        {error, _} = Error ->
+            Error;
+
+        {Public, Secret} ->
+            #{ public => Public, secret => Secret }
+    end.
 
 -spec sign(Message :: binary(), Secret :: secret_key()) -> binary().
 sign(Message, Secret) when is_binary(Message), is_binary(Secret) ->
