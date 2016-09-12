@@ -1,7 +1,7 @@
 -module(sphincs_nif).
 
 %% Private API.
--export([keypair/0,
+-export([keypair/1,
          sign/2,
          verify/2]).
 
@@ -30,8 +30,8 @@ init() ->
     erlang:load_nif(File, 0).
 
 %% @private
--spec keypair() -> {binary(), binary()}.
-keypair() ->
+-spec keypair(binary()) -> {binary(), binary()}.
+keypair(_) ->
     ?nif_stub.
 
 %% @private

@@ -3,6 +3,8 @@ PROJECT = sphincs
 PROJECT_DESCRIPTION = SPHINCS: practical stateless hash-based signatures
 PROJECT_VERSION = 1.0.0
 
+LOCAL_DEPS = crypto
+
 BLAKE256   ?= ref
 BLAKE512   ?= ref
 SPHINCS256 ?= ref
@@ -12,7 +14,6 @@ CRYPTO_CORE_INCLUDE_DIR = $(C_SRC_DIR)/crypto_core/include
 CRYPTO_CORE_TEMPLATE_DIR = $(C_SRC_DIR)/crypto_core/templates
 
 CFLAGS  = -Wall -O2 -I$(CRYPTO_CORE_INCLUDE_DIR)
-LDLIBS  = -lsodium
 
 CRYPTO_CORE_SOURCES = $(sort $(foreach pat,*.c,$(call core_find,$(C_SRC_DIR)/crypto_core/src/,$(pat))))
 BLAKE256_SOURCES    = $(sort $(foreach pat,*.c,$(call core_find,$(C_SRC_DIR)/crypto_hash/blake256/$(BLAKE256)/,$(pat))))

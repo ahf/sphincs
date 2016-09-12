@@ -16,7 +16,7 @@
 
 -spec keypair() -> keypair().
 keypair() ->
-    {Public, Secret} = sphincs_nif:keypair(),
+    {Public, Secret} = sphincs_nif:keypair(crypto:strong_rand_bytes(1088)),
     #{ public => Public, secret => Secret }.
 
 -spec sign(Message :: binary(), Secret :: secret_key()) -> binary().

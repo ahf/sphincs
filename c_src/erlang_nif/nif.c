@@ -1,7 +1,5 @@
 #include <string.h>
 
-#include <sodium.h>
-
 #include "erl_nif.h"
 
 #include "../crypto_sign/sphincs256/ref/api.h"
@@ -17,9 +15,18 @@ static ERL_NIF_TERM enif_sphincs_keypair(ErlNifEnv *env, int argc, ERL_NIF_TERM 
 
     ErlNifBinary public;
     ErlNifBinary secret;
+    ErlNifBinary random;
 
-    if (argc != 0) {
+    if (argc != 1) {
         return enif_make_badarg(env);
+    }
+
+    if (! enif_inspect_iolist_as_binary(env, argv[0], &random)) {
+        return enif_make_badarg(env);
+    }
+
+    if (random.size != CRYPTO_SECRETKEYBYTES) {
+        return make_error_tuple(env, "invalid_random");
     }
 
     if (! enif_alloc_binary(CRYPTO_PUBLICKEYBYTES, &public)) {
@@ -29,6 +36,8 @@ static ERL_NIF_TERM enif_sphincs_keypair(ErlNifEnv *env, int argc, ERL_NIF_TERM 
     if (! enif_alloc_binary(CRYPTO_SECRETKEYBYTES, &secret)) {
         return make_error_tuple(env, "alloc_secretkey_failed");
     }
+
+    memmove(secret.data, random.data, secret.size);
 
     if (crypto_sign_sphincs_keypair(public.data, secret.data) != 0) {
         return make_error_tuple(env, "keypair_failed");
@@ -125,7 +134,7 @@ static ERL_NIF_TERM enif_sphincs_verify(ErlNifEnv *env, int argc, ERL_NIF_TERM c
 #endif
 
 static ErlNifFunc nif_functions[] = {
-    CPU_BOUND_NIF_FUNCTION("keypair", 0, enif_sphincs_keypair),
+    CPU_BOUND_NIF_FUNCTION("keypair", 1, enif_sphincs_keypair),
     CPU_BOUND_NIF_FUNCTION("sign", 2, enif_sphincs_sign),
     CPU_BOUND_NIF_FUNCTION("verify", 2, enif_sphincs_verify),
 };
@@ -136,7 +145,7 @@ static int on_load(ErlNifEnv *env, void **priv_data, ERL_NIF_TERM load_info)
     (void)priv_data;
     (void)load_info;
 
-    return sodium_init() >= 0 ? 0 : 1;
+    return 0;
 }
 
 static int on_upgrade(ErlNifEnv *env, void **priv_data, void **old_priv_data, ERL_NIF_TERM load_info)

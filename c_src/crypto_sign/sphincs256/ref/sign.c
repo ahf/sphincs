@@ -2,7 +2,6 @@
 #include <string.h>
 
 #include "api.h"
-#include "randombytes.h"
 #include "zerobytes.h"
 #include "params.h"
 #include "wots.h"
@@ -219,7 +218,6 @@ int crypto_sign_sphincs_keypair(unsigned char *pk, unsigned char *sk)
 {
   leafaddr a;
 
-  randombytes(sk,CRYPTO_SECRETKEYBYTES);
   memcpy(pk,sk+SEED_BYTES,N_MASKS*HASH_BYTES);
 
   // Initialization of top-subtree address
