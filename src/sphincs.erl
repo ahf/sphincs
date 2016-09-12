@@ -1,3 +1,13 @@
+%%%
+%%% Copyright (c) 2016 Alexander Færøy. All rights reserved.
+%%% Use of this source code is governed by a BSD-style
+%%% license that can be found in the LICENSE file.
+%%%
+%%% -----------------------------------------------------------
+%%% @author Alexander Færøy <ahf@0x90.dk>
+%%% @doc SPHINCS-256 NIF for Erlang
+%%% @end
+%%% -----------------------------------------------------------
 -module(sphincs).
 
 %% API.
@@ -5,30 +15,65 @@
          sign/2,
          verify/2]).
 
--ifdef(TEST).
--include_lib("triq/include/triq.hrl").
--endif.
+%% Types.
+-export_type([secret_key/0,
+              public_key/0,
+              keypair/0
+             ]).
 
 -type secret_key() :: binary().
 -type public_key() :: binary().
 
 -type keypair()    :: #{ secret => secret_key(), public => public_key() }.
 
--spec keypair() -> keypair().
+%% @doc Generate a new SPHINCS-256 keypair.
+%%
+%% Generates and returns a new SPHINCS-256 keypair. The return value is a map
+%% in order to ensure that the public key is not used as a secret key and vice
+%% versa.
+%%
+%% @end
+-spec keypair() -> {ok, KeyPair} | {error, Reason}
+    when
+        KeyPair :: keypair(),
+        Reason  :: term().
 keypair() ->
     case sphincs_nif:keypair(crypto:strong_rand_bytes(1088)) of
         {error, _} = Error ->
             Error;
 
         {Public, Secret} ->
-            #{ public => Public, secret => Secret }
+            {ok, #{ public => Public,
+                    secret => Secret }}
     end.
 
--spec sign(Message :: binary(), Secret :: secret_key()) -> binary().
+%% @doc Sign a message using a SPHINCS-256 secret key.
+%%
+%% Sign a given message with a SPHINCS-256 secret key. The return value is a
+%% binary containing the signature followed by the message itself.
+%%
+%% @end
+-spec sign(Message, SecretKey) -> SignedMessage
+    when
+        Message       :: iolist(),
+        SecretKey     :: secret_key(),
+        SignedMessage :: binary().
 sign(Message, Secret) when is_binary(Message), is_binary(Secret) ->
     sphincs_nif:sign(Message, Secret).
 
--spec verify(Message :: binary(), Public :: public_key()) -> {ok, binary()} | {error, term()}.
+%% @doc Verify a given signed message using a SPHINCS-256 public key.
+%%
+%% Verify a given message with a SPHINCS-256 public key. The return value
+%% contains the message itself with the signature stripped if the verification
+%% was succesful, otherwise an error tuple is returned.
+%%
+%% @end
+-spec verify(SignedMessage, PublicKey) -> {ok, Message} | {error, Reason}
+    when
+        SignedMessage :: iolist(),
+        PublicKey     :: public_key(),
+        Message       :: binary(),
+        Reason        :: term().
 verify(SignedMessage, Public) when is_binary(SignedMessage), is_binary(Public) ->
     case sphincs_nif:verify(SignedMessage, Public) of
         Message when is_binary(Message) ->
@@ -37,17 +82,3 @@ verify(SignedMessage, Public) when is_binary(SignedMessage), is_binary(Public) -
         {error, _} = Error ->
             Error
     end.
-
--ifdef(TEST).
-key() ->
-    #{ secret := Secret, public := Public } = keypair(),
-    {Public, Secret}.
-
-prop_create_sign_verify_valid() ->
-    ?FORALL({{Public, Secret}, Message}, {key(), binary()},
-        begin
-            SignedMessage = sign(Message, Secret),
-            {ok, VerifiedMessage} = verify(SignedMessage, Public),
-            Message =:= VerifiedMessage
-        end).
--endif.

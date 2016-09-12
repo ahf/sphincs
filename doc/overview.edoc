@@ -1,0 +1,40 @@
+@title SPHINCS-256 NIF for Erlang
+@version 1.0.0 (SUPERCOP: 20141124)
+@author Alexander Færøy <ahf@0x90.dk>
+
+@doc
+
+SPHINCS-256 is a high-security post-quantum stateless hash-based signature
+scheme. This repository contains the SPHINCS-256 implementation found in the
+SUPERCOP performance suite together with an Erlang NIF's for the SPHINCS API.
+
+SPHINCS-256 uses 41 KB signatures, 1 KB public keys, and 1 KB private keys.
+
+For more information about SPHINCS see:
+
+- <a href="http://sphincs.cr.yp.to/">sphincs.cr.yp.to</a>
+- <a href="http://bench.cr.yp.to/supercop.html">supercop</a>
+
+== Example Usage ==
+
+1. Alice generates a new keypair and sends her public key to Bob.
+
+   <pre lang="erlang">#{ secret := Secret, public := Public } = sphincs:keypair().</pre>
+
+2. Alice signs a document and sends it to Bob.
+
+   <pre lang="erlang">SignedDocument = sphincs:sign(Message, Secret).</pre>
+
+3. Bob verifies the signed document from Alice.
+
+   <pre lang="erlang">sphincs:verify(SignedDocument, Public).</pre>
+
+== Issues ==
+
+- It's currently only the <code>ref</code> implementation of BLAKE-256,
+  BLAKE-512, ChaCha12 and SPHINCS-256 that have been tested. It would be nice
+  to have vectorized versions for higher performance.
+
+- The Erlang bindings of sphincs could use some tests :-)
+
+@end
