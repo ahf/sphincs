@@ -2,7 +2,7 @@
 
 # SPHINCS-256 NIF for Erlang #
 
-__Version:__ 1.0.0 (SUPERCOP: 20141124)
+__Version:__ 1.0.0 (SUPERCOP: 20160910)
 
 __Authors:__ Alexander Færøy ([`ahf@0x90.dk`](mailto:ahf@0x90.dk)).
 
