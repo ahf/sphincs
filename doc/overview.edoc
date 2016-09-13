@@ -12,18 +12,18 @@ SPHINCS-256 uses 41 KB signatures, 1 KB public keys, and 1 KB private keys.
 
 For more information about SPHINCS see:
 
-- <a href="http://sphincs.cr.yp.to/">sphincs.cr.yp.to</a>
-- <a href="http://bench.cr.yp.to/supercop.html">supercop</a>
+- http://sphincs.cr.yp.to/
+- http://bench.cr.yp.to/supercop.html
 
 == Example Usage ==
 
 1. Alice generates a new keypair and sends her public key to Bob.
 
-   <pre lang="erlang">#{ secret := Secret, public := Public } = sphincs:keypair().</pre>
+   <pre lang="erlang">{ok, #{ secret := Secret, public := Public }} = sphincs:keypair().</pre>
 
 2. Alice signs a document and sends it to Bob.
 
-   <pre lang="erlang">SignedDocument = sphincs:sign(Message, Secret).</pre>
+   <pre lang="erlang">SignedDocument = sphincs:sign(Document, Secret).</pre>
 
 3. Bob verifies the signed document from Alice.
 
